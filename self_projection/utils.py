@@ -17,9 +17,7 @@ def load_counts(data_dir: str) -> pd.DataFrame:
         cell_id = fn.replace('.csv.gz', '')
         path = os.path.join(data_dir, fn)
         with gzip.open(path, 'rt') as f:
-            # 自动检测分隔符，默认把第一行当列名
             df = pd.read_csv(f, sep=None, engine='python')
-        # gene_id 列当索引，第二列当 count 值
         genes = df.iloc[:, 0]
         counts = df.iloc[:, 1]
         counts.index = genes
@@ -39,7 +37,6 @@ def load_cell_types(ct_file: str, cells: pd.Index) -> pd.Series:
         if ct_df.shape[1] != 1:
             ct_df.columns = ['cell_type']
     except:
-        # 兜底：无 header，强制两列
         ct_df = pd.read_csv(ct_file, header=None, names=['cell_id','cell_type'], index_col=0)
     # 对齐顺序
     ct = ct_df['cell_type'].reindex(cells)
@@ -151,9 +148,7 @@ def project_cells(adata: sc.AnnData, centroids: pd.DataFrame, use_genes: pd.Inde
         best_type, best_r = 'unassigned', -np.inf
         v = data_feat.loc[cell].values
         for ctype, centroid in centroids.iterrows():
-            # 计算相关
             r, _ = pearsonr(v, centroid.values)
-            # 跳过 nan
             if np.isnan(r):
                 continue
             if r > best_r:
