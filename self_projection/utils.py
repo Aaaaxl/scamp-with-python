@@ -9,7 +9,6 @@ from anndata import AnnData
 from scipy.optimize import curve_fit
 
 def load_counts(data_dir: str) -> pd.DataFrame:
-    """加载所有单细胞计数，返回 genes×cells 的 DataFrame"""
     cell_series = []
     for fn in sorted(os.listdir(data_dir)):
         if not fn.endswith('.csv.gz'):
@@ -30,8 +29,6 @@ def load_counts(data_dir: str) -> pd.DataFrame:
     return counts_matrix
 
 def load_cell_types(ct_file: str, cells: pd.Index) -> pd.Series:
-    """读取 cell_types.csv 并对齐到给定的 cells 顺序，返回 cell_id→cell_type 的 Series"""
-    # 假设文件无 header，或者有 header 列名为 cell_id,cell_type
     try:
         ct_df = pd.read_csv(ct_file, index_col=0)
         if ct_df.shape[1] != 1:
@@ -46,7 +43,6 @@ def load_cell_types(ct_file: str, cells: pd.Index) -> pd.Series:
     return ct
 
 def select_features_LinearDrop(X: np.ndarray, var_names: pd.Index, n_features: int=500):
-    """基于 log(dropout) ~ log(mean) 残差，选取 top n_features 基因"""
     # X: (n_cells, n_genes)
     mean_expr = X.mean(axis=0)
     dropout_rate = np.sum(X == 0, axis=0) / X.shape[0]
@@ -65,13 +61,6 @@ def select_features_LinearDrop(X: np.ndarray, var_names: pd.Index, n_features: i
     return top_genes
 
 def select_features_linear(X, var_names, n_features=500):
-    """
-    输入：
-      X          : np.ndarray 或 sparse matrix, shape (n_cells, n_genes)
-      var_names  : pd.Index，长度 = n_genes
-    返回：
-      top_genes  : pd.Index，长度 = n_features
-    """
     # 兼容稀疏
     if sparse.issparse(X):
         X = X.toarray()
@@ -116,9 +105,6 @@ def select_features_hvg(
     return top_genes
 
 def select_features_random(var_names, n_features=500, seed=None):
-    """
-    直接随机挑 var_names 中的 n_features 个。
-    """
     rng       = np.random.default_rng(seed)
     idx       = rng.choice(len(var_names), size=n_features, replace=False)
     top_genes = var_names[idx]
@@ -127,7 +113,6 @@ def select_features_random(var_names, n_features=500, seed=None):
 
 
 def build_centroids(adata: sc.AnnData, use_genes: pd.Index) -> pd.DataFrame:
-    """对每个 cell_type 计算所选基因的平均表达，返回 types×genes 的 DataFrame"""
     df = pd.DataFrame(
         adata.X[:, [adata.var_names.get_loc(g) for g in use_genes]],
         index=adata.obs_names,
@@ -137,7 +122,6 @@ def build_centroids(adata: sc.AnnData, use_genes: pd.Index) -> pd.DataFrame:
     return centroids
 
 def project_cells(adata: sc.AnnData, centroids: pd.DataFrame, use_genes: pd.Index):
-    """对每个细胞计算其与各 centroid 的 Pearson 相关，打标签"""
     X = adata[:, use_genes].X
     if sparse.issparse(X):
         X = X.toarray()
