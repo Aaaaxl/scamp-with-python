@@ -30,7 +30,7 @@ def projection_rf_svm(raw_dir, ct_file, n_features, feature_selection='linear', 
         print("Invalid feature selection method")
         return 0
 
-    # —— 提取训练矩阵 —— #
+    # 提取训练矩阵
     X = adata[:, top_genes].X
     if sparse.issparse(X):
         X = X.toarray()
@@ -40,7 +40,7 @@ def projection_rf_svm(raw_dir, ct_file, n_features, feature_selection='linear', 
         X, y, train_size=0.7, stratify=y, random_state=seed
     )
 
-    # 4. 训练并预测
+    # 训练并预测
     if projection == 'rf':
         t0 = time.perf_counter()
 
@@ -66,7 +66,7 @@ def projection_rf_svm(raw_dir, ct_file, n_features, feature_selection='linear', 
     else:
         raise ValueError(f"Invalid projection: {projection}")
 
-    # 5. 计算指标
+    # 计算指标
     acc = accuracy_score(y_test, y_pred)
     kappa = cohen_kappa_score(y_test, y_pred)
     report = classification_report(y_test, y_pred, zero_division=0)
